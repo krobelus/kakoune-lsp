@@ -256,6 +256,9 @@ fn dispatch_editor_request(request: EditorRequest, mut ctx: &mut Context) {
         "apply-workspace-edit" => {
             workspace::apply_edit_from_editor(meta, params, ctx);
         }
+        "apply-text-edits" => {
+            workspace::apply_completion_edit_from_editor(meta, params, ctx);
+        }
         "semantic-scopes" => {
             semantic_highlighting::debug_scopes(meta, &mut ctx);
         }

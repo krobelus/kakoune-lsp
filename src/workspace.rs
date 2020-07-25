@@ -1,5 +1,6 @@
 use crate::context::*;
 use crate::language_features::rust_analyzer;
+use crate::position::{kakoune_position_to_lsp, kakoune_range_to_lsp};
 use crate::types::*;
 use crate::util::*;
 use jsonrpc_core::{Id, Params};
@@ -243,6 +244,135 @@ pub fn apply_edit_from_editor(meta: EditorMeta, params: EditorParams, ctx: &mut 
         .expect("Failed to parse edit");
 
     apply_edit(meta, edit, ctx);
+}
+
+#[derive(Deserialize)]
+struct CompletionApplyEdit {
+    range: String,
+    label: String,
+}
+
+// We store text edits from textDocument/completion in a map, indexed by the completion's label,
+// which is inserted by Kakoune's completion engine when accepting the completion.
+// Replace the label by the completion's text edit.
+// Additionally clean up leftover text right of the cursor. This would
+// be replaced by the completion's text edit, however since the label was
+// inserted at the cursor, we need to recompute the ranges.
+pub fn apply_completion_edit_from_editor(
+    meta: EditorMeta,
+    params: EditorParams,
+    ctx: &mut Context,
+) {
+    let params = CompletionApplyEdit::deserialize(params).expect("Failed to parse params");
+    let saved_text_edit = match ctx.completion_text_edits.get_mut(&meta.client) {
+        None => {
+            return warn!(
+                "Cannot find text edits for client: {}",
+                meta.client.unwrap_or("".to_string())
+            )
+        }
+        Some(client_completion_text_edits) => {
+            client_completion_text_edits
+                .remove_entry(&params.label)
+                .or_else(|| {
+                    client_completion_text_edits
+                        // HACK we get one character too many from "select %val{hook_param}" in InsertCompletionHide.
+                        .remove_entry(without_last_character(&params.label))
+                })
+        }
+    };
+    match saved_text_edit {
+        Some((completion_label, completion_text_edit)) => {
+            apply_completion_edit(&meta, &params, ctx, completion_label, completion_text_edit)
+        }
+        None => warn!("Cannot find completion by label: {}", &params.label),
+    };
+
+    // Invalidate this client's edits since they were accepted or rejected.
+    if let Some(map) = ctx.completion_text_edits.get_mut(&meta.client) {
+        map.clear();
+    }
+}
+
+fn apply_completion_edit(
+    meta: &EditorMeta,
+    params: &CompletionApplyEdit,
+    ctx: &Context,
+    completion_label: String,
+    completion_text_edit: CompletionTextEdit,
+) {
+    let coordinates: Vec<_> = params
+        .range
+        .split(|c| c == ',' || c == '.')
+        .filter_map(|num| num.parse::<u64>().ok())
+        .collect();
+    if coordinates.len() != 4 {
+        return error!("Failed to parse position: {}", &params.range);
+    }
+    let document = match ctx.documents.get(&meta.buffile) {
+        Some(doc) => doc,
+        None => return error!("No document in context for file: {}", &meta.buffile),
+    };
+    let inserted_range = kakoune_range_to_lsp(
+        &KakouneRange {
+            start: KakounePosition {
+                line: coordinates[0],
+                column: coordinates[1],
+            },
+            end: KakounePosition {
+                line: coordinates[2],
+                column: coordinates[3],
+            },
+        },
+        &document.text,
+        ctx.offset_encoding,
+    );
+
+    let text_edit = match completion_text_edit {
+        CompletionTextEdit::Edit(e) => e,
+        CompletionTextEdit::InsertAndReplace(e) => {
+            // TODO We assume replace.
+            TextEdit::new(e.replace, e.new_text)
+        }
+    };
+
+    // Replace the completion label left of the cursor with the completion text.
+    let mut left_range = Range::new(text_edit.range.start, text_edit.range.start);
+    // After the text edit was sent, we did insert the completion label.
+    left_range.end.character += completion_label.chars().count() as u64;
+    let left_edit = TextEdit::new(left_range, text_edit.new_text);
+
+    // Delete leftover text right of the cursor.
+    let mut right_range = Range::new(inserted_range.end, inserted_range.end);
+    let cursor_width = 1;
+    right_range.start.character += cursor_width;
+    let cursor_position = kakoune_position_to_lsp(
+        &ctx.completion_cursor_position,
+        &document.text,
+        &ctx.offset_encoding,
+    );
+    // TODO I think we get an overflow because of stale documents.
+    let range_right_of_cursor = text_edit
+        .range
+        .end
+        .character
+        .saturating_sub(cursor_position.character);
+    right_range.end.character += cursor_width + range_right_of_cursor;
+    let right_edit = TextEdit::new(right_range, "".to_string());
+
+    let mut edits = vec![left_edit];
+    assert!(left_range.start != left_range.end);
+    if right_edit.range.start != right_edit.range.end {
+        edits.push(right_edit);
+    }
+
+    let uri = Url::from_file_path(meta.buffile.clone()).expect("Failed to construct URI");
+    apply_text_edits(&meta, &uri, &edits[..], ctx);
+}
+
+fn without_last_character(s: &str) -> &str {
+    let end = s.char_indices().last().map_or(0, |tuple| tuple.0);
+    &s[..end]
 }
 
 pub fn apply_edit_from_server(id: Id, params: Params, ctx: &mut Context) {

@@ -95,7 +95,7 @@ define-command -hidden lsp-did-change-and-then -params 1 -docstring %{
             echo "fail"
         fi
     }
-    declare-option -hidden str lsp_callback "evaluate-commands -client %val{client} %arg{1}"
+    declare-option -hidden str lsp_callback "evaluate-commands -verbatim -client %val{client} %arg{1}"
     set-option buffer lsp_timestamp %val{timestamp}
     evaluate-commands -save-regs '|' %{
         set-register '|' %{
@@ -566,11 +566,21 @@ edit     = %s
 ' "${kak_session}" "${kak_client}" "${kak_buffile}" "${kak_opt_filetype}" "${kak_timestamp}" "$1" | eval ${kak_opt_lsp_cmd} --request) > /dev/null 2>&1 < /dev/null & }
 }
 
-define-command lsp-apply-text-edits -params 1 -hidden %{
-    lsp-did-change-and-then "lsp-apply-text-edits-request '%arg{1}'"
+define-command -hidden lsp-on-completion-hide -params 1 %{
+	echo -debug args %arg{@}
+	evaluate-commands -draft %{
+	    select %arg{1}
+	    # Use the first line of the main selection as completion label.
+	    execute-keys <space>s[^\n]+<ret>)<space>
+	    lsp-apply-text-edits %arg{1} %reg{.}
+	}
 }
 
-define-command lsp-apply-text-edits-request -params 1 -hidden %{
+define-command lsp-apply-text-edits -params 2 -hidden %{
+    lsp-did-change-and-then "lsp-apply-text-edits-request %arg{1} '%arg{2}'"
+}
+
+define-command lsp-apply-text-edits-request -params 2 -hidden %{
     nop %sh{ (printf '
 session  = "%s"
 client   = "%s"
@@ -579,8 +589,9 @@ filetype = "%s"
 version  = %d
 method   = "apply-text-edits"
 [params]
-edit     = %s
-' "${kak_session}" "${kak_client}" "${kak_buffile}" "${kak_opt_filetype}" "${kak_timestamp}" "$1" | eval ${kak_opt_lsp_cmd} --request) > /dev/null 2>&1 < /dev/null & }
+range    = "%s"
+label    = "%s"
+' "${kak_session}" "${kak_client}" "${kak_buffile}" "${kak_opt_filetype}" "${kak_timestamp}" "$@" | eval ${kak_opt_lsp_cmd} --request) > /dev/null 2>&1 < /dev/null & }
 }
 
 define-command lsp-stop -docstring "Stop kak-lsp session" %{
@@ -1297,6 +1308,7 @@ define-command -hidden lsp-enable -docstring "Default integration with kak-lsp" 
         lsp-did-change
         %sh{if $kak_opt_lsp_auto_highlight_references; then echo "lsp-highlight-references"; else echo "nop"; fi}
     }
+    hook -group lsp global InsertCompletionHide .+ %{ lsp-on-completion-hide %val{hook_param} }
 }
 
 define-command -hidden lsp-disable -docstring "Disable kak-lsp" %{
@@ -1341,6 +1353,7 @@ define-command lsp-enable-window -docstring "Default integration with kak-lsp in
         lsp-did-change
         %sh{if $kak_opt_lsp_auto_highlight_references; then echo "lsp-highlight-references"; else echo "nop"; fi}
     }
+    hook -group lsp global InsertCompletionHide .+ %{ lsp-on-completion-hide %val{hook_param} }
 
     lsp-did-open
     lsp-did-change-config

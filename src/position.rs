@@ -44,6 +44,19 @@ pub fn lsp_range_to_kakoune(
     }
 }
 
+/// Convert Kakoune's range-spec to an LSP Range.
+pub fn kakoune_range_to_lsp(
+    range: &KakouneRange,
+    text: &Rope,
+    offset_encoding: OffsetEncoding,
+) -> Range {
+    match offset_encoding {
+        OffsetEncoding::Utf8 => kakoune_range_to_lsp_utf_8_code_units(range),
+        // Not a proper UTF-16 code units handling, but works within BMP
+        OffsetEncoding::Utf16 => kakoune_range_to_lsp_utf_8_code_points(range, text),
+    }
+}
+
 pub fn lsp_position_to_kakoune(
     position: &Position,
     text: &Rope,
@@ -104,6 +117,19 @@ fn lsp_range_to_kakoune_utf_8_code_points(range: &Range, text: &Rope) -> Kakoune
             character: end_byte,
         },
     })
+}
+
+fn kakoune_range_to_lsp_utf_8_code_units(range: &KakouneRange) -> Range {
+    Range::new(
+        kakoune_position_to_lsp_utf_8_code_units(&range.start),
+        kakoune_position_to_lsp_utf_8_code_units(&range.end),
+    )
+}
+fn kakoune_range_to_lsp_utf_8_code_points(range: &KakouneRange, text: &Rope) -> Range {
+    Range::new(
+        kakoune_position_to_lsp_utf_8_code_points(&range.start, text),
+        kakoune_position_to_lsp_utf_8_code_points(&range.end, text),
+    )
 }
 
 fn lsp_range_to_kakoune_utf_8_code_units(range: &Range) -> KakouneRange {
@@ -179,9 +205,16 @@ fn lsp_range_to_kakoune_utf_8_code_units(range: &Range) -> KakouneRange {
 fn kakoune_position_to_lsp_utf_8_code_points(position: &KakounePosition, text: &Rope) -> Position {
     // -1 because LSP & Rope ranges are 0-based, but Kakoune's are 1-based.
     let line = position.line - 1;
-    let character = text
-        .line(line as _)
-        .byte_to_char((position.column - 1) as _) as _;
+    // TODO When selecting a completion in insert mode we first receive a
+    // new textDocument/completion and only after that receive the textDocument/didChange
+    // that corresponds to us selecting the completion.
+    // HACK temporary workaround that seems to work when the input is ASCII only.
+    let character = if ((position.column - 1) as usize) >= text.line(line as _).len_bytes() {
+        position.column - 1
+    } else {
+        text.line(line as _)
+            .byte_to_char((position.column - 1) as _) as _
+    };
     Position { line, character }
 }
 

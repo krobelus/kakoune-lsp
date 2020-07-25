@@ -43,6 +43,8 @@ pub struct Context {
     pub offset_encoding: OffsetEncoding,
     pub semantic_highlighting_faces: Vec<String>,
     pub semantic_highlighting_lines: HashMap<String, Vec<SemanticHighlightingInformation>>,
+    pub completion_text_edits: HashMap<Option<String>, HashMap<String, CompletionTextEdit>>,
+    pub completion_cursor_position: KakounePosition,
 }
 
 impl Context {
@@ -74,6 +76,11 @@ impl Context {
             offset_encoding,
             semantic_highlighting_faces: Vec::new(),
             semantic_highlighting_lines: HashMap::default(),
+            completion_text_edits: HashMap::default(),
+            completion_cursor_position: KakounePosition {
+                line: 0xffffffffffffffff,
+                column: 0xffffffffffffffff,
+            },
         }
     }
 

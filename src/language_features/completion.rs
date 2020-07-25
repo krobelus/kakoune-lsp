@@ -74,6 +74,23 @@ pub fn editor_completion(
                     .collect::<String>();
                 entry += &format!(" {{MenuInfo}}{:?}", k);
             }
+            if let Some(text_edit) = x.text_edit.as_ref() {
+                let client_completion_text_edits =
+                    match ctx.completion_text_edits.get_mut(&meta.client) {
+                        Some(map) => map,
+                        None => ctx
+                            .completion_text_edits
+                            .entry(meta.client.clone())
+                            .or_default(),
+                    };
+                // We do not overwrite a previous completion with the same label.
+                // TODO we should do that when adding support for moving
+                // the cursor while the completion pager is active.
+                if !client_completion_text_edits.contains_key(&x.label) {
+                    client_completion_text_edits.insert(x.label.clone(), text_edit.clone());
+                    ctx.completion_cursor_position = params.position.clone();
+                }
+            }
             // The generic textEdit property is not supported yet (#40).
             // However, we can support simple text edits that only replace the token left of the
             // cursor. Kakoune will do this very edit if we simply pass it the replacement string
