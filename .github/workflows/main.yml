@@ -1,0 +1,35 @@
+name: Rust
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  ubuntu:
+
+    runs-on: ubuntu-latest
+
+    env:
+      TARGET: x86_64-unknown-linux-musl
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build
+      run: ci/all.sh
+
+  macos:
+
+    runs-on: macos-latest
+
+    env:
+      TARGET: x86_64-apple-darwin
+    
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build
+      run: ci/all.sh
