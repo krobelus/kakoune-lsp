@@ -20,16 +20,24 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Build
-      run: ci/all.sh
+      run: |
+        echo 123 > kak-lsp-$(git describe --tags)-$TARGET.tar.gz
+        # ci/all.sh
 
-  macos:
+    - uses: actions/upload-artifact@v2
+      with:
+        name: kak-lsp-$(git describe --tags)-$TARGET.tar.gz
+        path: kak-lsp-$(git describe --tags)-$TARGET.tar.gz
 
-    runs-on: macos-latest
 
-    env:
-      TARGET: x86_64-apple-darwin
+  # macos:
+
+  #   runs-on: macos-latest
+
+  #   env:
+  #     TARGET: x86_64-apple-darwin
     
-    steps:
-    - uses: actions/checkout@v2
-    - name: Build
-      run: ci/all.sh
+  #   steps:
+  #   - uses: actions/checkout@v2
+  #   - name: Build
+  #     run: ci/all.sh
