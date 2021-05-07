@@ -47,7 +47,7 @@ declare-option -docstring "Set it to a positive number to limit the size of the 
 # Configuration to send in DidChangeNotification messages.
 declare-option -docstring "Configuration to send in DidChangeNotification messages" str-to-str-map lsp_server_configuration
 # Configuration to send in initializationOptions of Initialize messages.
-declare-option -docstring "Configuration to send in initializationOptions of Initialize messages." str-to-str-map lsp_server_initialization_options
+declare-option -docstring "Configuration to send in initializationOptions of Initialize messages. Must be valid TOML." str lsp_server_initialization_options
 # Line flags for inline diagnostics.
 declare-option -docstring "Character to signal an error in the gutter" str lsp_diagnostic_line_error_sign '*'
 declare-option -docstring "Character to signal a warning in the gutter" str lsp_diagnostic_line_warning_sign '!'
@@ -1098,20 +1098,11 @@ define-command -hidden lsp-handle-progress -params 4 -docstring %{
 
 define-command -hidden lsp-get-server-initialization-options -params 1 -docstring %{
     lsp-get-server-initialization-options <fifo>
-    Format lsp_server_initialization_options as TOML and write to the given <fifo> path.
+    Write lsp_server_initialization_options to the given <fifo> path.
 } %{
     nop %sh{
-(eval "set -- $kak_quoted_opt_lsp_server_initialization_options"
-while [ $# -gt 0 ]; do
-    key=${1%%=*}
-    value=${1#*=}
-    quotedkey='"'$(printf %s "$key"|sed -e 's/\\/\\\\/' -e 's/"/\\"/')'"'
-
-    printf '%s = %s\n' "$quotedkey" "$value"
-
-    shift
-done
-) > $1 }
+        printf %s "$kak_opt_lsp_server_initialization_options" > $1
+    }
 }
 
 ### Other commands ###
