@@ -735,6 +735,30 @@ cat ${pipe} | tee /tmp/pipe
 rm -rf ${tmp}
 }}
 
+define-command tmp %{
+    # the second parameter is a code for the type of change, where
+    # 1 = Created
+    # 2 = Changed
+    # 3 = Deleted
+    # This assumes that the current file is a C/C++ file in the same directory as its compile_commands.json.
+    lsp-did-change-watched-files "file://%sh{dirname $kak_buffile}/compile_commands.json" 2
+}
+define-command -hidden lsp-did-change-watched-files -docstring "Send a workspace/didChangeWatchedFiles request" -params 2 %{
+    nop %sh{ (printf '
+session   = "%s"
+client    = "%s"
+buffile   = "%s"
+filetype  = "%s"
+version   = %d
+method    = "workspace/didChangeWatchedFiles"
+[[params.changes]]
+uri = "%s"
+type = %d
+' "${kak_session}" "${kak_client}" "${kak_buffile}" "${kak_opt_filetype}" "${kak_timestamp}" "$1" "$2" |
+    eval ${kak_opt_lsp_cmd} --request) > /dev/null 2>&1 < /dev/null & }
+}
+
+
 # CCLS Extension
 
 define-command ccls-navigate -docstring "Navigate C/C++/ObjectiveC file" -params 1 %{

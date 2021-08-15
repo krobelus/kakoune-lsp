@@ -16,7 +16,12 @@ args = ["start"]
 [language.c_cpp]
 filetypes = ["c", "cpp"]
 roots = ["compile_commands.json", ".clangd"]
-command = "clangd"
+command = "sh"
+args = ["-c",
+    """
+    clangd --log=verbose 2>/tmp/clangd.log
+    """,
+]
 
 [language.crystal]
 filetypes = ["crystal"]

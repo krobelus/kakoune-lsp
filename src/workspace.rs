@@ -39,6 +39,13 @@ pub fn did_change_configuration(meta: EditorMeta, mut params: EditorParams, ctx:
     ctx.notify::<DidChangeConfiguration>(params);
 }
 
+pub fn did_change_watched_files(_meta: EditorMeta, params: EditorParams, ctx: &mut Context) {
+    let params = DidChangeWatchedFilesParams::deserialize(params)
+        .expect("Params should follow DidChangeWatchedFilesParams structure");
+    info!("{:?}", params);
+    ctx.notify::<DidChangeWatchedFiles>(params);
+}
+
 pub fn configuration(
     meta: EditorMeta,
     _params: Params,

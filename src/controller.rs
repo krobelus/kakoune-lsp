@@ -222,6 +222,9 @@ fn dispatch_editor_request(request: EditorRequest, mut ctx: &mut Context) {
         notification::DidChangeConfiguration::METHOD => {
             workspace::did_change_configuration(meta, params, &mut ctx);
         }
+        notification::DidChangeWatchedFiles::METHOD => {
+            workspace::did_change_watched_files(meta, params, &mut ctx);
+        }
         request::Completion::METHOD => {
             completion::text_document_completion(meta, params, &mut ctx);
         }
