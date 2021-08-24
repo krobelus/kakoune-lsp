@@ -29,18 +29,24 @@ filetypes = ["css"]
 roots = ["package.json", ".git"]
 command = "css-languageserver"
 args = ["--stdio"]
+initialization_section = "css"
+[language.css.settings.css]
 
 [language.less]
 filetypes = ["less"]
 roots = ["package.json", ".git"]
 command = "css-languageserver"
 args = ["--stdio"]
+initialization_section = "less"
+[language.less.settings.less]
 
 [language.scss]
 filetypes = ["scss"]
 roots = ["package.json", ".git"]
 command = "css-languageserver"
 args = ["--stdio"]
+initialization_section = "scss"
+[language.scss.settings.scss]
 
 [language.d]
 filetypes = ["d", "di"]
@@ -58,30 +64,68 @@ args = ["-c", "dart $(dirname $(command -v dart))/snapshots/analysis_server.dart
 filetypes = ["elixir"]
 roots = ["mix.exs"]
 command = "elixir-ls"
+initialization_section = "elixirLS"
+[language.elixir.settings.elixirLS] # From https://github.com/elixir-lsp/elixir-ls/blob/master/apps/language_server/lib/language_server/server.ex
+dialyzerEnable = true
+mixEnv = "test"
 
 [language.elm]
 filetypes = ["elm"]
 roots = ["elm.json"]
 command = "elm-language-server"
 args = ["--stdio"]
-
-[language.elm.initialization_options]
+initialization_section = "elmLS"
+[language.elm.settings.elmLS] # From https://github.com/elm-tooling/elm-language-server#server-settings
 runtime = "node"
+trace.server = "off"
 elmPath = "elm"
 elmFormatPath = "elm-format"
 elmTestPath = "elm-test"
+elmReviewPath = ""
+elmReviewDiagnostics = "off"
+disableElmLSDiagnostics = false
+skipInstallPackageConfirmation = false
+onlyUpdateDiagnosticsOnSave = false
 
 [language.go]
 filetypes = ["go"]
 roots = ["Gopkg.toml", "go.mod", ".git", ".hg"]
 command = "gopls"
 offset_encoding = "utf-8"
+initialization_section = "gopls"
+[language.go.settings.gopls] # From https://github.com/golang/tools/blob/master/gopls/doc/settings.md
+"build.buildFlags" = []
+"build.env" = {}
+"build.directoryFilters" = []
+"formatting.local" = ""
+"formatting.gofumpt" = true
+"ui.codelenses".gc_details = false
+"ui.codelenses".generate = true
+"ui.codelenses".regenerate_cgo = true
+"ui.codelenses".tidy = true
+"ui.codelenses".upgrade_dependency = true
+"ui.codelenses".vendor = true
+"ui.usePlaceholders" = false
+"ui.diagnostic.analyses" = {}
+"ui.documentation.hoverKind" = "FullDocumentation"
+"ui.documentation.linkTarget" = "pkg.go.dev"
+"ui.documentation.linksInHover" = true
+"ui.navigation.importShortcut" = "Both"
 
 [language.haskell]
 filetypes = ["haskell"]
 roots = ["Setup.hs", "stack.yaml", "*.cabal"]
 command = "haskell-language-server-wrapper"
 args = ["--lsp"]
+initialization_section = "haskell" # TODO Check this
+[language.haskell.settings.haskell] # From https://github.com/latex-lsp/texlab/blob/e1ee8495b0f54b4411a1ffacf787efa621d8f826/src/options.rs
+formattingProvider = "ormolu"
+formatOnImportOn = true
+diagnosticsOnChange = true
+completionSnippetsOn = true
+liquidOn = false
+hlintOn = true
+maxCompletions = 40
 
 [language.html]
 filetypes = ["html"]
@@ -115,6 +159,9 @@ args = ["--stdio"]
 #     "-data",
 #     "/path/to/eclipse-workspace",
 # ]
+# # no initialization_section
+# [language.java.settings] # See https://github.dev/eclipse/eclipse.jdt.ls for more options.
+# "java.format.insertSpaces" = true
 
 [language.javascript]
 filetypes = ["javascript"]
@@ -149,16 +196,193 @@ args = [
         run(server);
     """,
 ]
+# no initialization_section  # The server ignores initializationOptions, and on workspace/didChangeConfiguration it requests the values below via workspace/configuration.
+[language.julia.settings] # From https://github.com/julia-vscode/LanguageServer.jl/blob/master/src/requests/workspace.jl
+# Format options. See https://github.com/julia-vscode/DocumentFormat.jl/blob/master/src/DocumentFormat.jl
+"julia.format.indent" = 4
+"julia.format.indents" = true
+"julia.format.ops" = true
+"julia.format.tuples" = true
+"julia.format.curly" = true
+"julia.format.calls" = true
+"julia.format.iterOps" = true
+"julia.format.comments" = true
+"julia.format.docs" = true
+"julia.format.lineends" = false
+"julia.format.keywords" = true
+"julia.format.kwarg" = "none"
+# Lint options. See https://github.com/julia-vscode/StaticLint.jl/blob/master/src/linting/checks.jl
+"julia.lint.call" = true
+"julia.lint.iter" = true
+"julia.lint.nothingcomp" = true
+"julia.lint.constif" = true
+"julia.lint.lazy" = true
+"julia.lint.datadecl" = true
+"julia.lint.typeparam" = true
+"julia.lint.modname" = true
+"julia.lint.pirates" = true
+"julia.lint.useoffuncargs" = true
+# From https://github.com/julia-vscode/LanguageServer.jl/blob/master/src/requests/workspace.jl
+"julia.lint.run" = "true"
+"julia.lint.missingrefs" = "all"
+"julia.lint.disabledDirs" = ["test", "docs"]
+"julia.completionmode" = "import"
 
 [language.latex]
 filetypes = ["latex"]
 roots = [".git"]
 command = "texlab"
+initialization_section = "texlab"
+[language.latex.settings.texlab] # From https://github.com/latex-lsp/texlab/blob/master/src/options.rs
+# rootDirectory = "."
+# auxDirectory = "."
+bibtexFormatter = "texlab"
+latexFormatter = "latexindent"
+formatterLineLength = 80
+diagnosticsDelay = 300
+build.executable = "latexmk"
+build.args = ["-pdf", "-interaction=nonstopmode", "-synctex=1", "%f"]
+build.isContinuous = false
+build.onSave = false
+build.forwardSearchAfter = false
+chktx.onOpenAndSave = false
+chktx.onEdit = false
+latexindent.local = "localSettings.yaml"
+latexindent.modifyLineBreaks = false
+# forwardSearch.executable = ""
+# forwardSearch.args = []
 
 [language.lua]
 filetypes = ["lua"]
 roots = [".git"]
 command = "lua-language-server"
+[language.lua.settings] # https://github.com/sumneko/vscode-lua/blob/master/setting/schema.json
+"Lua.color.mode" = "Semantic"
+"Lua.completion.autoRequire" = true
+"Lua.completion.callSnippet" = "Disable"
+"Lua.completion.displayContext" = 6
+"Lua.completion.enable" = true
+"Lua.completion.keywordSnippet" = "Replace"
+"Lua.completion.showParams" = true
+"Lua.completion.workspaceWord" = true
+# "Lua.diagnostics.disable" = []
+"Lua.diagnostics.enable" = true
+# "Lua.diagnostics.globals" = []
+"Lua.diagnostics.neededFileStatus.ambiguity-1" = "Any"
+"Lua.diagnostics.neededFileStatus.circle-doc-class" = "Any"
+"Lua.diagnostics.neededFileStatus.close-non-object" = "Any"
+"Lua.diagnostics.neededFileStatus.code-after-break" = "Opened"
+"Lua.diagnostics.neededFileStatus.count-down-loop" = "Any"
+"Lua.diagnostics.neededFileStatus.deprecated" = "Opened"
+"Lua.diagnostics.neededFileStatus.doc-field-no-class" = "Any"
+"Lua.diagnostics.neededFileStatus.duplicate-doc-class" = "Any"
+"Lua.diagnostics.neededFileStatus.duplicate-doc-field" = "Any"
+"Lua.diagnostics.neededFileStatus.duplicate-doc-param" = "Any"
+"Lua.diagnostics.neededFileStatus.duplicate-index" = "Any"
+"Lua.diagnostics.neededFileStatus.duplicate-set-field" = "Any"
+"Lua.diagnostics.neededFileStatus.empty-block" = "Opened"
+"Lua.diagnostics.neededFileStatus.global-in-nil-env" = "Any"
+"Lua.diagnostics.neededFileStatus.lowercase-global" = "Any"
+"Lua.diagnostics.neededFileStatus.newfield-call" = "Any"
+"Lua.diagnostics.neededFileStatus.newline-call" = "Any"
+"Lua.diagnostics.neededFileStatus.no-implicit-any" = "None"
+"Lua.diagnostics.neededFileStatus.redefined-local" = "Opened"
+"Lua.diagnostics.neededFileStatus.redundant-parameter" = "Opened"
+"Lua.diagnostics.neededFileStatus.redundant-value" = "Opened"
+"Lua.diagnostics.neededFileStatus.trailing-space" = "Opened"
+"Lua.diagnostics.neededFileStatus.unbalanced-assignments" = "Any"
+"Lua.diagnostics.neededFileStatus.undefined-doc-class" = "Any"
+"Lua.diagnostics.neededFileStatus.undefined-doc-name" = "Any"
+"Lua.diagnostics.neededFileStatus.undefined-doc-param" = "Any"
+"Lua.diagnostics.neededFileStatus.undefined-env-child" = "Any"
+"Lua.diagnostics.neededFileStatus.undefined-field" = "Opened"
+"Lua.diagnostics.neededFileStatus.undefined-global" = "Any"
+"Lua.diagnostics.neededFileStatus.unknown-diag-code" = "Any"
+"Lua.diagnostics.neededFileStatus.unused-function" = "Opened"
+"Lua.diagnostics.neededFileStatus.unused-label" = "Opened"
+"Lua.diagnostics.neededFileStatus.unused-local" = "Opened"
+"Lua.diagnostics.neededFileStatus.unused-vararg" = "Opened"
+"Lua.diagnostics.severity.ambiguity-1" = "Warning"
+"Lua.diagnostics.severity.circle-doc-class" = "Warning"
+"Lua.diagnostics.severity.close-non-object" = "Warning"
+"Lua.diagnostics.severity.code-after-break" = "Hint"
+"Lua.diagnostics.severity.count-down-loop" = "Warning"
+"Lua.diagnostics.severity.deprecated" = "Warning"
+"Lua.diagnostics.severity.doc-field-no-class" = "Warning"
+"Lua.diagnostics.severity.duplicate-doc-class" = "Warning"
+"Lua.diagnostics.severity.duplicate-doc-field" = "Warning"
+"Lua.diagnostics.severity.duplicate-doc-param" = "Warning"
+"Lua.diagnostics.severity.duplicate-index" = "Warning"
+"Lua.diagnostics.severity.duplicate-set-field" = "Warning"
+"Lua.diagnostics.severity.empty-block" = "Hint"
+"Lua.diagnostics.severity.global-in-nil-env" = "Warning"
+"Lua.diagnostics.severity.lowercase-global" = "Information"
+"Lua.diagnostics.severity.newfield-call" = "Warning"
+"Lua.diagnostics.severity.newline-call" = "Information"
+"Lua.diagnostics.severity.no-implicit-any" = "Information"
+"Lua.diagnostics.severity.redefined-local" = "Hint"
+"Lua.diagnostics.severity.redundant-parameter" = "Hint"
+"Lua.diagnostics.severity.redundant-value" = "Hint"
+"Lua.diagnostics.severity.trailing-space" = "Hint"
+"Lua.diagnostics.severity.unbalanced-assignments" = "Warning"
+"Lua.diagnostics.severity.undefined-doc-class" = "Warning"
+"Lua.diagnostics.severity.undefined-doc-name" = "Warning"
+"Lua.diagnostics.severity.undefined-doc-param" = "Warning"
+"Lua.diagnostics.severity.undefined-env-child" = "Information"
+"Lua.diagnostics.severity.undefined-field" = "Warning"
+"Lua.diagnostics.severity.undefined-global" = "Warning"
+"Lua.diagnostics.severity.unknown-diag-code" = "Waiting"
+"Lua.diagnostics.severity.unused-function" = "Hint"
+"Lua.diagnostics.severity.unused-label" = "Hint"
+"Lua.diagnostics.severity.unused-local" = "Hint"
+"Lua.diagnostics.severity.unused-vararg" = "Hint"
+"Lua.diagnostics.workspaceDelay" = 0
+"Lua.diagnostics.workspaceRate" = 100
+"Lua.hint.enable" = false
+"Lua.hint.paramName" = true
+"Lua.hint.paramType" = true
+"Lua.hint.setType" = false
+"Lua.hover.enable" = true
+"Lua.hover.enumsLimit" = 5
+"Lua.hover.previewFields" = 20
+"Lua.hover.viewNumber" = true
+"Lua.hover.viewString" = true
+"Lua.hover.viewStringMax" = 1000
+# "Lua.misc.parameters" = []
+"Lua.runtime.builtin.basic" ="default"
+"Lua.runtime.builtin.bit" ="default"
+"Lua.runtime.builtin.bit32" ="default"
+"Lua.runtime.builtin.builtin" ="default"
+"Lua.runtime.builtin.coroutine" ="default"
+"Lua.runtime.builtin.debug" ="default"
+"Lua.runtime.builtin.ffi" ="default"
+"Lua.runtime.builtin.io" ="default"
+"Lua.runtime.builtin.jit" ="default"
+"Lua.runtime.builtin.math" ="default"
+"Lua.runtime.builtin.os" ="default"
+"Lua.runtime.builtin.package" ="default"
+"Lua.runtime.builtin.string" ="default"
+"Lua.runtime.builtin.table" ="default"
+"Lua.runtime.builtin.utf8" ="default"
+"Lua.runtime.fileEncoding" = "utf8"
+# "Lua.runtime.nonstandardSymbol" = []
+"Lua.runtime.path" = ["?.lua", "?/init.lua", "?/?.lua"]
+"Lua.runtime.plugin" = ""
+"Lua.runtime.special" = {}
+"Lua.runtime.unicodeName" = false
+# "Lua.runtime.version" = "Lua 5.4"
+"Lua.signatureHelp.enable" = true
+# "Lua.telemetry.enable" = false
+"Lua.window.progressBar" = true
+"Lua.window.statusBar" = true
+"Lua.workspace.checkThirdParty" = true
+"Lua.workspace.ignoreDir" = [".vscode"]
+"Lua.workspace.ignoreSubmodules" = true
+"Lua.workspace.library" = []
+"Lua.workspace.maxPreload" = 1000
+"Lua.workspace.preloadFileSize" = 100
+"Lua.workspace.useGitIgnore" = true
+"Lua.workspace.userThirdParty" = []
 
 [language.nim]
 filetypes = ["nim"]
@@ -174,32 +398,96 @@ command = "rnix-lsp"
 filetypes = ["ocaml"]
 roots = ["Makefile", "opam", "*.opam", "dune"]
 command = "ocamllsp"
+[language.ocaml.settings.ocaml]
 
 [language.php]
 filetypes = ["php"]
 roots = [".htaccess", "composer.json"]
 command = "intelephense"
 args = ["--stdio"]
-
-[language.php.initialization_options]
-storagePath = "/tmp/intelephense"
+initialization_section = "intelephense" # TODO check
+[language.php.settings] # TODO
+intelephense.maxMemory = 0
+intelephense.storagePath = "/tmp/intelephense"
+# "intelephense.licence_key" =
+"php.validate".run = "onType"
 
 [language.python]
 filetypes = ["python"]
 roots = ["requirements.txt", "setup.py", ".git", ".hg"]
 command = "pyls"
 offset_encoding = "utf-8"
+# no initialization_section
+[language.python.settings] # From https://github.com/palantir/python-language-server#configuration
+# https://github.com/palantir/python-language-server/blob/develop/vscode-client/package.json
+"pyls.configurationSources" = ["pycodestyle"] # TODO
+"pyls.plugins.jedi.extra_paths" = []
+"pyls.plugins.jedi.env_vars" = {}
+"pyls.plugins.jedi.environment" = ""
+"pyls.plugins.jedi_completion.enabled" = true
+"pyls.plugins.jedi_completion.include_params" = true
+"pyls.plugins.jedi_completion.include_class_objects" = true
+"pyls.plugins.jedi_completion.fuzzy" = false
+"pyls.plugins.jedi_definition.enabled" = true
+"pyls.plugins.jedi_definition.follow_imports" = true
+"pyls.plugins.jedi_definition.follow_builtin_imports" = true
+"pyls.plugins.jedi_hover.enabled" = true
+"pyls.plugins.jedi_references.enabled" = true
+"pyls.plugins.jedi_signature_help.enabled" = true
+"pyls.plugins.jedi_symbols.enabled" = true
+"pyls.plugins.jedi_symbols.all_scopes" = true
+"pyls.plugins.mccabe.enabled" = true
+"pyls.plugins.mccabe.threshold" = 15
+"pyls.plugins.preload.enabled" = true
+"pyls.plugins.preload.modules" = []
+"pyls.plugins.pycodestyle.enabled" = true
+"pyls.plugins.pycodestyle.exclude" = []
+"pyls.plugins.pycodestyle.filename" = []
+"pyls.plugins.pycodestyle.select" = []
+"pyls.plugins.pycodestyle.ignore" = []
+# "pyls.plugins.pycodestyle.hangClosing" = false
+"pyls.plugins.pycodestyle.maxLineLength" = 80 # TODO
+"pyls.plugins.pydocstyle.enabled" = false
+"pyls.plugins.pydocstyle.convention" = "pep257" # TODO
+"pyls.plugins.pydocstyle.addIgnore" = []
+"pyls.plugins.pydocstyle.addSelect" = []
+"pyls.plugins.pydocstyle.ignore" = []
+"pyls.plugins.pydocstyle.select" = []
+"pyls.plugins.pydocstyle.match" = "(?!test_).*\\.py"
+"pyls.plugins.pydocstyle.matchDir" = "[^\\.].*"
+"pyls.plugins.pyflakes.enabled" = true
+"pyls.plugins.pylint.enabled" = false
+"pyls.plugins.pylint.args" = []
+"pyls.plugins.pylint.executable" = "pylint" # TODO
+"pyls.plugins.rope_completion.enabled" = true
+"pyls.plugins.yapf.enabled" = true
+"pyls.rope.extensionModules" = ""
+# "pyls.rope.ropeFolder" = []
 
 [language.reason]
 filetypes = ["reason"]
 roots = ["package.json", "Makefile", ".git", ".hg"]
 command = "ocamllsp"
+[language.reason.settings]
 
 [language.ruby]
 filetypes = ["ruby"]
 roots = ["Gemfile"]
 command = "solargraph"
 args = ["stdio"]
+initialization_section = "solargraph" # TODO test
+[language.ruby.settings.solargraph] # From https://github.com/castwide/solargraph/blob/master/lib/solargraph/language_server/host.rb
+completion = true
+hover = true
+symbols = true
+definitions = true
+rename = true
+references = true
+autoformat = false
+diagnostics = false
+formatting = false
+folding = true
+logLevel = "warn"
 
 [language.rust]
 filetypes = ["rust"]
@@ -215,6 +503,19 @@ args = [
         fi
     """,
 ]
+[language.rust.settings.rust] # From https://github.com/rust-lang/rls#configuration
+unstable_features = false
+sysroot = ""
+target = ""
+# wait_to_build = 300
+all_targets = true
+crate_blacklist = ["cocoa", "gleam", "glium", "idna", "libc", "openssl", "rustc_serialize", "serde", "serde_json", "typenum", "unicode_normalization", "unicode_segmentation", "winapi"] # TODO
+build_on_save = false
+features = []
+all_features = false
+no_default_features = false
+racer_completion = true
+clippy_preference = "opt-in"
 
 # [language.rust]
 # filetypes = ["rust"]
@@ -230,26 +531,127 @@ args = [
 #         fi
 #     """,
 # ]
-# [language.rust.initialization_options]
+# initialization_section = "rust-analyzer"
 # # If you get 'unresolved proc macro' warnings, you have two options
 # # 1. The safe choice is two disable the warning:
-# diagnostics.disabled = ["unresolved-proc-macro"]
+# # diagnostics.disabled = ["unresolved-proc-macro"]
 # # 2. Or you can opt-in for proc macro support
-# procMacro.enable = true
-# cargo.loadOutDirsFromCheck = true
+# # procMacro.enable = true
+# # cargo.loadOutDirsFromCheck = true
 # # See https://github.com/rust-analyzer/rust-analyzer/issues/6448
+# [language.rust.settings.rust-analyzer] # From https://rust-analyzer.github.io/manual.html#configuration
+# assist.importGranularity = "crate"
+# assist.importEnforceGranularity = false
+# assist.importPrefix = "plain"
+# assist.importGroup = true
+# assist.allowMergingIntoGlobImports = true
+# callInfo.full = true
+# cargo.autoreload = true
+# cargo.allFeatures = false
+# cargo.unsetTest = ["core"]
+# cargo.features = []
+# cargo.runBuildScripts = true
+# cargo.useRustcWrapperForBuildScripts = true
+# cargo.noDefaultFeatures = false
+# # cargo.target = ""
+# cargo.noSysroot = false
+# checkOnSave.enable = true
+# checkOnSave.allFeatures = false
+# checkOnSave.allTargets = true
+# checkOnSave.command = "check"
+# checkOnSave.noDefaultFeatures = false
+# # checkOnSave.target = ""
+# checkOnSave.extraArgs = []
+# checkOnSave.features = []
+# # checkOnSave.overrideCommand = ""
+# completion.addCallArgumentSnippets = true
+# completion.addCallParenthesis = true
+# completion.postfix.enable = true
+# completion.autoimport.enable = true
+# completion.autoself.enable = true
+# diagnostics.enable = true
+# diagnostics.enableExperimental = true
+# diagnostics.disabled = []
+# diagnostics.remapPrefix = {}
+# diagnostics.warningsAsHint = []
+# diagnostics.warningsAsInfo = []
+# experimental.procAttrMacros = false
+# files.watcher = "client"
+# files.excludeDirs = []
+# highlightRelated.references = true
+# highlightRelated.exitPoints = true
+# highlightRelated.breakPoints = true
+# highlightRelated.yieldPoints = true
+# highlighting.strings = true
+# hover.documentation = true
+# hover.linksInHover = true
+# hoverActions.debug = true
+# hoverActions.enable = true
+# hoverActions.gotoTypeDef = true
+# hoverActions.implementations = true
+# hoverActions.references = false
+# hoverActions.run = true
+# inlayHints.chainingHints = true
+# inlayHints.maxLength = 25
+# inlayHints.parameterHints = true
+# inlayHints.typeHints = true
+# joinLines.joinElseIf = true
+# joinLines.removeTrailingComma = true
+# joinLines.unwrapTrivialBlock = true
+# lens.debug = true
+# lens.enable = true
+# lens.implementations = true
+# lens.run = true
+# lens.methodReferences = false
+# lens.references = false
+# lens.forceCustomCommands = true
+# linkedProjects = []
+# lruCapacity = 128
+# notifications.cargoTomlNotFound = true
+# procMacro.enable = true
+# # runnables.overrideCargo = "cargo"
+# runnables.cargoExtraArgs = []
+# # rustcSource = "discover"
+# rustfmt.extraArgs = []
+# # rustfmt.overrideCommand = "rustfmt"
+# rustfmt.enableRangeFormatting = false
+# workspace.symbol.search.scope = "workspace"
+# workspace.symbol.search.kind = "only_types"
 
 [language.terraform]
 filetypes = ["terraform"]
 roots = ["*.tf"]
 command = "terraform-ls"
 args = ["serve"]
+[language.terraform.settings."terraform-ls"] # From https://github.com/hashicorp/terraform-ls/blob/main/docs/SETTINGS.md
+rootModulePaths = []
+excludeModulePaths = []
 
 [language.yaml]
 filetypes = ["yaml"]
 roots = [".git"]
 command = "yaml-language-server"
 args = ["--stdio"]
+[language.yaml.settings] # From https://github.com/redhat-developer/yaml-language-server#language-server-settings
+# Defaults from https://github.com/redhat-developer/yaml-language-server/blob/master/src/yamlSettings.ts
+yaml.format.enable = true
+yaml.format.singleQuote = false
+yaml.format.bracketSpacing = true
+yaml.format.proseWrap = "preserve"
+yaml.format.printWidth = 80
+yaml.validate = true
+yaml.hover = true
+yaml.completion = true
+yaml.schemas = []
+yaml.schemaStore.enable = true
+yaml.schemaStore.url = "https://www.schemastore.org/api/json/catalog.json"
+yaml.customTags = []
+yaml.maxItemsComputed = 5000
+"[yaml]".editor.tabSize = 2
+editor.tabSize = 2
+# http.proxy = "<url>"
+http.proxyStrictSSL = false
+"[yaml]".editor.formatOnType = false
 
 [language.zig]
 filetypes = ["zig"]

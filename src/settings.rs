@@ -20,8 +20,17 @@ pub fn request_initialization_options_from_kakoune(
     meta: &EditorMeta,
     ctx: &mut Context,
 ) -> Option<Value> {
+    let section = {
+        let language = ctx.config.language.get(&ctx.language_id).unwrap();
+        match &language.initialization_section {
+            Some(section) => section.clone(), // TODO
+            None => return None,
+        }
+    };
+
     let settings = request_dynamic_configuration_from_kakoune(meta, ctx)
-        .and_then(|cfg| cfg.initialization_options);
+        .and_then(|cfg| cfg.settings)
+        .and_then(|settings| settings.get(&section).cloned());
     if settings.is_some() {
         return settings;
     }
@@ -32,7 +41,13 @@ pub fn request_initialization_options_from_kakoune(
     }
 
     let language = ctx.config.language.get(&ctx.language_id).unwrap();
-    language.initialization_options.clone()
+
+    let settings = match &language.settings {
+        Some(settings) => settings,
+        None => return None,
+    };
+
+    settings.get(section).cloned()
 }
 
 pub fn parse_dynamic_config(
