@@ -311,7 +311,40 @@ define-command -hidden lsp-hide-code-actions -docstring "Called when no code act
 }
 
 define-command -hidden lsp-perform-code-action -params 1.. -docstring "Called when the user wants to run a code action" %{
-    menu %arg{@}
+    evaluate-commands %sh{
+        kakquote() {
+            printf "'"
+            printf %s "$1" | sed "s/'/''/g"
+            printf "'"
+        }
+        shellquote() {
+                printf "'"
+        	printf %s "$1" | sed "s/'/'\\\\''/g"
+                printf "'"
+        }
+        cases=
+        completion=
+        nl=$(printf '\n.'); nl=${nl%.}
+        while [ $# -gt 0 ]; do
+            title=$1; shift
+            command=$1; shift
+            completion="${completion}${title}${nl}"
+            cases="${cases}$(shellquote "$title")) printf '%s\\n' $(shellquote "$command") ;;${nl}"
+        done
+        printf "\
+        define-command -override lsp-perform-code-action-aux -params 1 %%{
+            evaluate-commands %%sh{
+                case \"\$1\" in
+                %s
+                *) echo fail no such code action: \"\$1\" ;;
+                esac
+            }
+        }" "$cases"
+        printf ' -shell-script-candidates %%{
+            printf %%s %s
+        }' "$(shellquote "$completion")" | tee /dev/stderr
+    }
+    execute-keys %{ :lsp-perform-code-action-aux }
 }
 
 define-command -hidden lsp-execute-command -params 2 -docstring "Execute a command" %{
