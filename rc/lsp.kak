@@ -301,13 +301,21 @@ performCodeAction = %s
 ' "${kak_session}" "${kak_client}" "${kak_buffile}" "${kak_opt_filetype}" "${kak_timestamp}" ${kak_cursor_line} ${kak_cursor_column} "$1" | eval ${kak_opt_lsp_cmd} --request) > /dev/null 2>&1 < /dev/null & }
 }
 
+declare-option range-specs lsp_code_actions_hint
+add-highlighter "global/lsp_code_actions_hint" replace-ranges lsp_code_actions_hint
+
 define-command -hidden lsp-show-code-actions -params 1.. -docstring "Called when code actions are available for the main cursor position" %{
     set-option buffer lsp_modeline "💡 "
+    evaluate-commands -draft %{
+        execute-keys "<a-l><semicolon>"
+        set-option buffer lsp_code_actions_hint %val{timestamp} "%val{cursor_line}.%sh{echo $((kak_cursor_column+1))}+0| 💡"
+    }
 }
 
 
 define-command -hidden lsp-hide-code-actions -docstring "Called when no code actions are available for the main cursor position" %{
     set-option buffer lsp_modeline ""
+    set-option buffer lsp_code_actions_hint %val{timestamp}
 }
 
 define-command -hidden lsp-perform-code-action -params 1.. -docstring "Called when the user wants to run a code action" %{
