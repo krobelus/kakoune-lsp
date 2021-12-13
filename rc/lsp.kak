@@ -142,6 +142,12 @@ declare-option -docstring "Number of warnings" int lsp_diagnostic_warning_count 
 
 # Internal variables.
 
+declare-option -hidden int lsp_completions_index -1
+hook global InsertCompletionHide .* %{
+    lsp-completion-item-resolve-request %opt{lsp_completions_index}
+    set-option window lsp_completions_index -1
+}
+
 declare-option -hidden completions lsp_completions
 declare-option -hidden range-specs lsp_errors
 declare-option -hidden line-specs lsp_error_lines 0 '0| '
@@ -250,6 +256,22 @@ offset    = %d
 have_kakoune_feature_filtertext = %s
 ' "${kak_session}" "${kak_client}" "${kak_buffile}" "${kak_opt_filetype}" "${kak_timestamp}" ${kak_cursor_line} ${kak_cursor_column} ${kak_opt_lsp_completion_offset} ${kak_opt_lsp_have_kakoune_feature_filtertext} | eval "${kak_opt_lsp_cmd} --request") > /dev/null 2>&1 < /dev/null & }
 }}
+
+define-command -hidden lsp-completion-item-resolve-request -params 1 -docstring "TODO" %{
+    nop %sh{
+        [ "${1}" -eq -1 ] && exit
+
+        (printf '
+session   = "%s"
+client    = "%s"
+buffile   = "%s"
+filetype  = "%s"
+version   = %d
+method    = "completionItem/resolve"
+[params]
+completion_item_index = %d
+' "${kak_session}" "${kak_client}" "${kak_buffile}" "${kak_opt_filetype}" "${kak_timestamp}" ${1} | eval "${kak_opt_lsp_cmd} --request") > /dev/null 2>&1 < /dev/null & }
+}
 
 define-command lsp-hover -docstring "Request hover info for the main cursor position" %{
     lsp-did-change-and-then lsp-hover-request

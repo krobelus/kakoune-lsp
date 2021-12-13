@@ -43,6 +43,7 @@ pub struct Context {
     pub offset_encoding: OffsetEncoding,
     pub work_done_progress: HashMap<NumberOrString, Option<WorkDoneProgressBegin>>,
     pub work_done_progress_report_timestamp: time::Instant,
+    pub completion_items: Vec<CompletionItem>,
 }
 
 impl Context {
@@ -74,6 +75,7 @@ impl Context {
             offset_encoding,
             work_done_progress: HashMap::default(),
             work_done_progress_report_timestamp: time::Instant::now(),
+            completion_items: vec![],
         }
     }
 

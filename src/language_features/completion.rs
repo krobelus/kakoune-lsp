@@ -1,6 +1,7 @@
 use crate::context::*;
 use crate::markup::*;
 use crate::position::*;
+use crate::text_edit::apply_text_edits;
 use crate::types::*;
 use crate::util::*;
 use indoc::formatdoc;
@@ -35,14 +36,17 @@ pub fn editor_completion(
     result: Option<CompletionResponse>,
     ctx: &mut Context,
 ) {
-    if result.is_none() {
+    let items = match result {
+        Some(CompletionResponse::Array(items)) => items,
+        Some(CompletionResponse::List(list)) => list.items,
+        None => vec![],
+    };
+
+    ctx.completion_items = items.clone(); // TODO
+
+    if items.is_empty() {
         return;
     }
-
-    let items = match result.unwrap() {
-        CompletionResponse::Array(items) => items,
-        CompletionResponse::List(list) => list.items,
-    };
 
     // Length of the longest label in the current completion list
     let maxlen = items.iter().map(|x| x.label.len()).max().unwrap_or(0);
@@ -59,7 +63,8 @@ pub fn editor_completion(
         .unwrap_or(false);
     let items = items
         .into_iter()
-        .map(|x| {
+        .enumerate()
+        .map(|(completion_item_index, x)| {
             let doc = x.documentation.map(|doc| match doc {
                 Documentation::String(s) => s,
                 Documentation::MarkupContent(content) => content.value,
@@ -85,17 +90,22 @@ pub fn editor_completion(
                 markdown
             };
 
-            let doc = if !markdown.is_empty() {
+            let set_index = format!(
+                "set-option window lsp_completions_index {};",
+                completion_item_index
+            );
+            let on_select = if !markdown.is_empty() {
                 let markup = markdown_to_kakoune_markup(markdown, force_plaintext);
                 format!(
-                    "info -markup -style menu -- %§{}§",
+                    "{} info -markup -style menu -- %§{}§",
+                    &set_index,
                     markup.replace("§", "§§")
                 )
             } else {
                 // When the user scrolls through the list of completion candidates, Kakoune
                 // does not clean up the info box. We need to do that explicitly, in this case by
                 // requesting an empty one.
-                "info -style menu ''".to_string()
+                set_index + " info -style menu ''"
             };
 
             let entry = match x.kind {
@@ -220,14 +230,14 @@ pub fn editor_completion(
                 let command = formatdoc!(
                     "{}
                      lsp-snippets-insert-completion {} {}",
-                    doc,
+                    on_select,
                     editor_quote(&regex::escape(insert_text)),
                     editor_quote(&snippet)
                 );
 
                 completion_entry(insert_text, &maybe_filter_text, &command, &entry)
             } else {
-                completion_entry(&insert_text, &maybe_filter_text, &doc, &entry)
+                completion_entry(&insert_text, &maybe_filter_text, &on_select, &entry)
             }
         })
         .join(" ");
@@ -240,4 +250,36 @@ pub fn editor_completion(
     );
 
     ctx.exec(meta, command);
+}
+
+pub fn completion_item_resolve(meta: EditorMeta, params: EditorParams, ctx: &mut Context) {
+    // let param = CompletionItem::deserialize(params).unwrap();
+    let CompletionItemResolveParams {
+        completion_item_index,
+    } = CompletionItemResolveParams::deserialize(params).unwrap();
+    if completion_item_index == -1 {
+        return;
+    }
+    let item = ctx.completion_items[completion_item_index as usize].clone(); // TODO
+    ctx.call::<ResolveCompletionItem, _>(meta, item.clone(), |tx: &mut Context, meta, result| {
+        editor_completion_item_resolve(tx, meta, item, result)
+    });
+}
+
+fn editor_completion_item_resolve(
+    ctx: &mut Context,
+    meta: EditorMeta,
+    item: CompletionItem,
+    result: CompletionItem,
+) {
+    match (
+        item.additional_text_edits.unwrap_or(vec![]).len(),
+        result.additional_text_edits,
+    ) {
+        (0, Some(resolved_edits)) => {
+            let uri = Url::from_file_path(&meta.buffile).unwrap();
+            apply_text_edits(&meta, &uri, resolved_edits, ctx)
+        }
+        _ => (),
+    }
 }
