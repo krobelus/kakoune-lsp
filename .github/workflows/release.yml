@@ -41,7 +41,7 @@ jobs:
       with:
         fetch-depth: 0 # for git describe --tags
     - name: Build
-      run: ci/build-release.sh
+      run: ci/build-release.sh ${{ matrix.target }}
     - name: Compute the tag
       id: tag
       run: echo "::set-output name=TAG::${GITHUB_REF#refs/tags/}"

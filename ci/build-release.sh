@@ -2,11 +2,14 @@
 
 set -eux
 
-case $(uname) in
-	Linux) target=x86_64-unknown-linux-musl;;
-	Darwin) target=x86_64-apple-darwin;;
-	*) echo "Unknown target $(uname)";;
-esac
+target=${1:-}
+if [ -z "$target" ]; then
+	case $(uname) in
+		Linux) target=x86_64-unknown-linux-musl;;
+		Darwin) target=x86_64-apple-darwin;;
+		*) echo "Unknown target $(uname)"; exit 1;;
+	esac
+fi
 
 version=$(git describe --tags)
 
