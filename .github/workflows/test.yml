@@ -68,13 +68,10 @@ jobs:
       if: matrix.os == 'macos-latest'
       run: brew install llvm@15
 
-    - name: Install gcc 10 via apt
-      if: matrix.os == 'ubuntu-latest'
+    - name: TMP
       run: |
-        sudo apt-get update
-        sudo apt-get install -y --no-install-recommends gcc-10
-      env:
-        DEBIAN_FRONTEND: noninteractive
+        command -v g++ ||:
+        ls /usr/bin | grep -F g++
 
     - name: Cache Kakoune
       id: cache-kakoune
